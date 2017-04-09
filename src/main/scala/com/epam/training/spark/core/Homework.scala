@@ -1,8 +1,13 @@
 package com.epam.training.spark.core
 
+import java.time.LocalDate
+import java.time.temporal.{ChronoUnit, TemporalUnit}
+
 import com.epam.training.spark.core.domain.Climate
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
+
+import scala.collection.mutable.ListBuffer
 
 object Homework {
   val DELIMITER = ";"
@@ -59,16 +64,62 @@ object Homework {
 
   }
 
-  def getRawDataWithoutHeader(sc: SparkContext, rawDataPath: String): RDD[List[String]] = ???
+  def getRawDataWithoutHeader(sc: SparkContext, rawDataPath: String): RDD[List[String]] = {
 
-  def findErrors(rawData: RDD[List[String]]): List[Int] = ???
+    sc.textFile(rawDataPath)
+      .filter(!_.startsWith("#datum"))
+      .map(_.split(";", -1).toList)
+  }
 
-  def mapToClimate(rawData: RDD[List[String]]): RDD[Climate] = ???
+  def aggregateLists(aggregate: List[Int], newLine: List[Int]) : List[Int] = {
+    val result = ListBuffer.empty[Int]
 
-  def averageTemperature(climateData: RDD[Climate], month: Int, dayOfMonth: Int): RDD[Double] = ???
+    for ( i <- 0 until aggregate.size) {
+      result += aggregate(i) + newLine(i)
+    }
 
-  def predictTemperature(climateData: RDD[Climate], month: Int, dayOfMonth: Int): Double = ???
+    result.toList
 
+  }
+
+  def findErrors(rawData: RDD[List[String]]): List[Int] = {
+
+    rawData.map(rawData =>
+      rawData.map(field => if (field.isEmpty) 1 else 0)
+    ).reduce(aggregateLists)
+
+  }
+
+  def mapToClimate(rawData: RDD[List[String]]): RDD[Climate] = {
+    rawData.map(Climate.parse)
+  }
+
+  def averageTemperature(climateData: RDD[Climate], month: Int, dayOfMonth: Int): RDD[Double] = {
+
+    climateData.filter(climateData => climateData.observationDate.getMonthValue == month &&
+      climateData.observationDate.getDayOfMonth == dayOfMonth).
+      map(climateData => climateData.meanTemperature.value)
+
+  }
+
+  def predictTemperature(climateData: RDD[Climate], month: Int, dayOfMonth: Int): Double = {
+    climateData.
+      filter(climateData => withinDateRange(climateData.observationDate, month, dayOfMonth, 1)).
+      map(climateData => climateData.meanTemperature.value).mean
+
+  }
+
+  def withinDateRange(date: LocalDate, month: Int, dayOfMonth: Int, tolerance: Int): Boolean = {
+
+    equalsDay(date, month, dayOfMonth) ||
+    equalsDay(date.plus(tolerance, ChronoUnit.DAYS), month, dayOfMonth) ||
+    equalsDay(date.minus(tolerance, ChronoUnit.DAYS), month, dayOfMonth)
+
+  }
+
+  def equalsDay(date: LocalDate, month: Int, dayOfMonth: Int): Boolean = {
+    date.getDayOfMonth == dayOfMonth && date.getMonthValue == month
+  }
 
 }
 

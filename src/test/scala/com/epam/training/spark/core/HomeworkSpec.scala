@@ -46,8 +46,16 @@ class HomeworkSpec extends FunSpec with BeforeAndAfterAll {
   describe("rdd") {
     describe("when reading from csv file") {
       it("should have a list of strings") {
+
         val actual = Homework.getRawDataWithoutHeader(sc, INPUT_BIDS_INTEGRATION)
         val expected = RAW_DATA
+
+        println("Actual")
+          actual.take(10).foreach(l => println(l.mkString(" | ")))
+
+        println("Expected")
+        expected.take(10).foreach(l => println(l.mkString(" | ")))
+
         RddComparator.printListDiff(expected, actual.collect())
         assert(actual.collect() === expected)
       }
@@ -56,6 +64,7 @@ class HomeworkSpec extends FunSpec with BeforeAndAfterAll {
     describe("when counting missing data") {
       it("should summarize them") {
         val actual = Homework.findErrors(sc.parallelize(RAW_DATA))
+
         val expected = List(0, 0, 0, 0, 2, 2, 3)
         assert(actual === expected)
       }

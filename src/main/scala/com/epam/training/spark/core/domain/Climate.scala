@@ -82,6 +82,10 @@ object Climate {
 
   val INPUT_DATE_FORMAT = DateTimeFormatter.ISO_DATE
 
+  def parse(row: List[String]) : Climate = {
+    apply(row(0), row(1), row(2), row(3), row(4), row(5), row(6))
+  }
+
   def apply(
              observationDate: String,
              meanTemperature: String,
