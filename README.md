@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/szantopeter/sparktraininghomework.svg?branch=master)](https://travis-ci.org/szantopeter/sparktraininghomework)
 # Spark Core homework
 
 ## Setup
